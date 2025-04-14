@@ -169,11 +169,11 @@ def get_nove_zasahy():
 @app.route('/api/status', methods=['GET'])
 def get_api_status():
     try:
-        # Zkusíme scrapovat data, pokud se to podaří, API je online
-        scrapuj_data()
+        # Zkusíme zavolat funkci get_nove_zasahy(), pokud se to podaří, API je online
+        get_nove_zasahy()
         return jsonify({"status": "online"})
-    except:
-        # Pokud scrapování selže, API je offline
+    except Exception as e:
+        logging.error(f"Chyba při kontrole stavu API: {e}")
         return jsonify({"status": "offline"})
 
 # Funkce pro pravidelné scrapování a zpracování dat

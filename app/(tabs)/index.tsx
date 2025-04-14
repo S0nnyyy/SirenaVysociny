@@ -8,7 +8,6 @@ import { EmergencyCard } from '@/components/EmergencyCard';
 import { Text } from 'react-native';
 import { useEmergencyStore } from '@/store/emergency-store';
 import { useThemeStore } from '@/store/theme-store';
-import { EmergencyCall } from '@/types/emergency';
 import * as Notifications from 'expo-notifications';
 
 Notifications.setNotificationHandler({
@@ -40,7 +39,7 @@ export default function HomeScreen() {
       const data = await response.json();
 
       if (data?.nove_zasahy && Array.isArray(data.nove_zasahy) && data.nove_zasahy.length > 0) {
-        const mappedCalls: EmergencyCall[] = data.nove_zasahy.map((item: any) => {
+        const mappedCalls = data.nove_zasahy.map((item: any) => {
           const parsedDate = new Date(item.datum.split('.').reverse().join('-').replace(' ', 'T') + ':00');
           return {
             id: Date.now().toString() + Math.random().toString(), // Generate a unique ID
@@ -54,15 +53,15 @@ export default function HomeScreen() {
             note: item.poznamka,
           };
         });
-        if (mappedCalls.length > 0) {
-          setEmergencyCalls(mappedCalls);
-          if (appState === 'active') {
-            newCalls.forEach(call => {
-              Notifications.scheduleNotificationAsync({
-                content: {
-                  title: "Nový výjezd",
-                  body: `${call.type} - ${call.location}`,
-                  data: { id: call.id },
+        
+        setEmergencyCalls(mappedCalls);
+        if (appState === 'active') {
+          mappedCalls.forEach(call => {
+            Notifications.scheduleNotificationAsync({
+              content: {
+                title: "Nový výjezd",
+                body: `${call.type} - ${call.location}`,
+                data: { id: call.id },
                 },
                 trigger: null,
               });
@@ -124,7 +123,7 @@ export default function HomeScreen() {
     </View>
   );
 
-  const renderItem = ({ item }: { item: EmergencyCall }) => (
+  const renderItem = ({ item }: { item: any }) => (
     <EmergencyCard emergency={item} />
   );
 
@@ -171,3 +170,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+}
