@@ -25,7 +25,6 @@ export default function HomeScreen() {
   const { theme } = useThemeStore();
   const getFilteredEmergencyCalls = useEmergencyStore(state => state.getFilteredEmergencyCalls);
   const setEmergencyCalls = useEmergencyStore(state => state.setEmergencyCalls);
-  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
 
@@ -54,12 +53,8 @@ export default function HomeScreen() {
             note: item.poznamka,
           };
         });
-        const currentCalls = getFilteredEmergencyCalls();
-        const newCalls = mappedCalls.filter(newCall => 
-          !currentCalls.some(call => call.id === newCall.id)
-        );
-        if (newCalls.length > 0) {
-          setEmergencyCalls([...currentCalls, ...newCalls]);
+        if (mappedCalls.length > 0) {
+          setEmergencyCalls(mappedCalls);
           if (appState === 'active') {
             newCalls.forEach(call => {
               Notifications.scheduleNotificationAsync({
@@ -79,7 +74,6 @@ export default function HomeScreen() {
         }
       }
     } catch (err: any) {
-      if (err.message !== 'Invalid data format received from the API' || (data?.nove_zasahy && Array.isArray(data.nove_zasahy) && data.nove_zasahy.length !== 0)) {
       
       console.error("Error fetching emergency calls:", err);
       setError(err.message || "An error occurred while fetching data.");
@@ -114,11 +108,7 @@ export default function HomeScreen() {
       return () => {
         subscription.remove();
       };
-    useCallback(() => {
-      const { setSelectedEmergencyId } = useEmergencyStore.getState();
-      setSelectedEmergencyId(null);
-    }, [])
-  );
+    }, [appState, getFilteredEmergencyCalls])
 
   const emergencyCalls = getFilteredEmergencyCalls();
 
@@ -177,15 +167,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'gray',
     textAlign: 'center',
-  },
-});
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  listContent: {
-    padding: 16,
-    paddingTop: 0,
   },
 });

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, Switch, TouchableOpacity, ScrollView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,6 +9,7 @@ import { useEmergencyStore } from '@/store/emergency-store';
 import { useThemeStore } from '@/store/theme-store';
 
 export default function SettingsScreen() {
+  const [apiStatus, setApiStatus] = useState('Offline');
   const colors = useThemeColors();
   const router = useRouter();
   const { theme, setTheme } = useThemeStore();
@@ -29,6 +30,27 @@ export default function SettingsScreen() {
   const navigateToTypeFilter = () => {
     router.push('/settings/type-filter');
   };
+  
+  useEffect(() => {
+    const checkApiStatus = async () => {
+      try {
+        const response = await fetch('http://192.168.1.101:5000/api/status'); // Replace with your API URL
+        if (response.ok) {
+          setApiStatus('Online');
+        } else {
+          setApiStatus('Offline');
+        }
+      } catch (error) {
+        console.error('Error checking API status:', error);
+        setApiStatus('Offline');
+      }
+    };
+
+    checkApiStatus();
+    const intervalId = setInterval(checkApiStatus, 60000); // Check every 60 seconds
+
+    return () => clearInterval(intervalId);
+  }, []);
   
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
@@ -157,6 +179,16 @@ export default function SettingsScreen() {
               trackColor={{ false: colors.border, true: `${colors.primary}80` }}
               thumbColor={filterSettings.showPending ? colors.primary : colors.textLight}
             />
+          </View>
+        </View>
+        
+        <View style={[styles.section, { backgroundColor: colors.card }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text, borderBottomColor: colors.border }]}>Stav API</Text>
+          <View style={[styles.settingItem, { borderBottomColor: colors.border }]}>
+            <View style={styles.settingInfo}>
+              <Text style={[styles.settingTitle, { color: colors.text }]}>Stav</Text>
+              <Text style={[styles.settingValue, { color: apiStatus === 'Online' ? 'green' : 'red' }]}>{apiStatus}</Text>
+            </View>
           </View>
         </View>
         
