@@ -20,7 +20,7 @@ export default StatisticsCard;
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-  },
+  }, // Added semicolon
   statItem: {
     alignItems: 'center',
   },

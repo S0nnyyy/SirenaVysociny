@@ -32,7 +32,7 @@ export default function HomeScreen() {
     setRefreshing(true);
     setError(null); // Clear any previous errors
     try {
-      const response = await fetch('http://localhost/api/status');
+      const response = await fetch('http://127.0.0.1:5000/api/nove-zasahy');
       if (!response.ok) {
         throw new Error(`Failed to fetch data: ${response.status}`);
       }
@@ -53,7 +53,7 @@ export default function HomeScreen() {
             note: item.poznamka,
           };
         });
-        
+
         setEmergencyCalls(mappedCalls);
         if (appState === 'active') {
           mappedCalls.forEach(call => {
@@ -62,11 +62,10 @@ export default function HomeScreen() {
                 title: "Nový výjezd",
                 body: `${call.type} - ${call.location}`,
                 data: { id: call.id },
-                },
-                trigger: null,
-              });
+              },
+              trigger: null,
             });
-          }
+          });
         }
       } else {
         if (!(data?.nove_zasahy && Array.isArray(data.nove_zasahy) && data.nove_zasahy.length === 0)) {
@@ -75,9 +74,6 @@ export default function HomeScreen() {
       }
     } catch (err: any) {
       console.error("Error fetching emergency calls:", err);
-      setError(err.message || "An error occurred while fetching data.");
-    }
-     catch (err: any) {
       setError(err.message || "An error occurred while fetching data.");
     } finally {
       setRefreshing(false);
@@ -171,5 +167,3 @@ const styles = StyleSheet.create({
     color: 'gray',
     textAlign: 'center',
   },
-});
-}
