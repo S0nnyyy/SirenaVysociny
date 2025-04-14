@@ -32,7 +32,7 @@ export default function HomeScreen() {
     setRefreshing(true);
     setError(null); // Clear any previous errors
     try {
-      const response = await fetch('http://192.168.1.101:5000/api/nove-zasahy');
+      const response = await fetch('http://localhost/api/status');
       if (!response.ok) {
         throw new Error(`Failed to fetch data: ${response.status}`);
       }
@@ -74,8 +74,10 @@ export default function HomeScreen() {
         }
       }
     } catch (err: any) {
-      
       console.error("Error fetching emergency calls:", err);
+      setError(err.message || "An error occurred while fetching data.");
+    }
+     catch (err: any) {
       setError(err.message || "An error occurred while fetching data.");
     } finally {
       setRefreshing(false);
