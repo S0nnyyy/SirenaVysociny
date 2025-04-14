@@ -25,6 +25,7 @@ export default function HomeScreen() {
   const { theme } = useThemeStore();
   const getFilteredEmergencyCalls = useEmergencyStore(state => state.getFilteredEmergencyCalls);
   const setEmergencyCalls = useEmergencyStore(state => state.setEmergencyCalls);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
 
@@ -109,6 +110,7 @@ export default function HomeScreen() {
         subscription.remove();
       };
     }, [appState, getFilteredEmergencyCalls])
+  );
 
   const emergencyCalls = getFilteredEmergencyCalls();
 
