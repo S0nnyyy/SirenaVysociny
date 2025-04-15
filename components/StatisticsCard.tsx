@@ -17,21 +17,22 @@ export default StatisticsCard;
 
 
 
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  }, // Added semicolon
-  statItem: {
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  statLabel: {
-    fontSize: 14,
-    color: 'gray',
-  },
+const styles = StyleSheet.create({
+    statsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+    },
+    statItem: {
+        alignItems: 'center',
+    },
+    statValue: {
+        fontSize: 24,
+        fontWeight: 'bold',
+    },
+    statLabel: {
+        fontSize: 14,
+        color: 'gray',
+    },
 });
 
 export default StatisticsCard;
