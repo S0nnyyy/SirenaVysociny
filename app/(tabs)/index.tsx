@@ -33,11 +33,12 @@ export default function HomeScreen() {
     else setLoadingMore(true);
     setError(null); // Vymazanie predchádzajúcich chýb
     try {
-      const response = await fetch(`http://127.0.0.1:5000/api/zasahy?limit=5&offset=${offset}`);
+      const response = await fetch(`http://10.0.0.27:5000/api/zasahy?limit=5&offset=${offset}`);
       if (!response.ok) {
-        throw new Error(`Nepodarilo sa načítať dáta: ${response.status}`);
+        throw new Error(`Nepodařilo se načíst data: ${response.status}`);
       }
       const data = await response.json();
+      console.log(data);
 
       if (data?.zasahy && Array.isArray(data.zasahy) && data.zasahy.length > 0) {
         const mappedCalls = data.zasahy.map((item: any) => {
@@ -68,17 +69,17 @@ export default function HomeScreen() {
         }
       }
     } catch (err: any) {
-      console.error('Chyba pri načítavaní tiesňových volaní:', err);
-      setError(err.message || 'Nastala chyba pri načítavaní dát.');
+      console.error('Chyba při načítání tísňových volání:', err);
+      setError(err.message || 'Nastala chyba při načítání dat.');
     } finally {
       if (initialLoad) setRefreshing(false);
-      else setLoadingMore(false);
+      else setLoadingMore(false)
     }
   };
 
   useEffect(() => {
     fetchEmergencyCalls(); // Počiatočné načítanie
-    const intervalId = setInterval(() => fetchEmergencyCalls(true), 60000); // Načítanie každých 60 sekúnd
+    const intervalId = setInterval(() => fetchEmergencyCalls(true), 2000); // Načítanie každé 2 sekundy
     return () => clearInterval(intervalId); // Vyčistenie pri odmontovaní
   }, []);
 
@@ -100,11 +101,11 @@ export default function HomeScreen() {
     useCallback(() => {
       const subscription = AppState.addEventListener('change', (nextAppState) => {
         if (appState === 'active' && nextAppState === 'background') {
-          // Aplikácia prešla do pozadia
+          // Aplikace přešla do pozadí
         }
 
         if (appState === 'background' && nextAppState === 'active') {
-          console.log('Aplikácia sa vrátila do popredia');
+          console.log('Aplikace se vrátila do popředí');
           fetchEmergencyCalls();
         }
         setAppState(nextAppState);
@@ -123,9 +124,9 @@ export default function HomeScreen() {
       {error ? (
         <Text style={styles.emptyStateText}>{error}</Text>
       ) : emergencyCalls.length === 0 && refreshing ? (
-        <Text style={styles.emptyStateText}>Načítavam...</Text>
+        <Text style={styles.emptyStateText}>Načítám...</Text>
       ) : (
-        <Text style={styles.emptyStateText}>Nenašli sa žiadne incidenty</Text>
+        <Text style={styles.emptyStateText}>Nebyly nalezeny žádné incidenty</Text>
       )}
     </View>
   );
@@ -151,7 +152,7 @@ export default function HomeScreen() {
         }
         onEndReached={loadMoreEmergencyCalls}
         onEndReachedThreshold={0.5}
-        ListFooterComponent={loadingMore ? <Text style={styles.loadingMore}>Načítavam viac...</Text> : null}
+        ListFooterComponent={loadingMore ? <Text style={styles.loadingMore}>Načítám více...</Text> : null}
       />
     </View>
   );

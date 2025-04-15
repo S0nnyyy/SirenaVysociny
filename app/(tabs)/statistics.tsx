@@ -48,7 +48,7 @@ export default function StatisticsScreen() {
             />
           </View>
           <View style={styles.statsColumn}>
-            <StatisticsCard
+            <StatisticsCard              
               title="Prům. doba odezvy"
               value={averageResponseTime}
               icon={<Clock size={24} color={colors.primary} />}

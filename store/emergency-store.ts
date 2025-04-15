@@ -23,6 +23,8 @@ interface EmergencyState {
   updateFilterSettings: (settings: Partial<FilterSettings>) => void;
   updateNotificationSettings: (settings: Partial<NotificationSettings>) => void;
   getFilteredEmergencyCalls: () => EmergencyCall[];
+  setEmergencyCalls: (calls: EmergencyCall[]) => void;
+  appendEmergencyCalls: (calls: EmergencyCall[]) => void;
 }
 
 export const useEmergencyStore = create<EmergencyState>()(
@@ -121,6 +123,14 @@ export const useEmergencyStore = create<EmergencyState>()(
           return true;
         });
       }
+      ,
+      setEmergencyCalls: (calls) => set({ emergencyCalls: calls }),
+      appendEmergencyCalls: (calls) => set((state) => ({
+        emergencyCalls: [...state.emergencyCalls, ...calls],
+      })),
+
+
+
     }),
     {
       name: 'emergency-storage',
