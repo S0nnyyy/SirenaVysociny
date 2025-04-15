@@ -24,25 +24,28 @@ export default function HomeScreen() {
   const { theme } = useThemeStore();
   const getFilteredEmergencyCalls = useEmergencyStore(state => state.getFilteredEmergencyCalls);
   const setEmergencyCalls = useEmergencyStore(state => state.setEmergencyCalls);
+  const appendEmergencyCalls = useEmergencyStore(state => state.appendEmergencyCalls);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [offset, setOffset] = useState(0);
 
-
-  const fetchEmergencyCalls = async () => {
-    setRefreshing(true);
+  const fetchEmergencyCalls = async (initialLoad = true) => {
+    if (initialLoad) setRefreshing(true);
+    else setLoadingMore(true);
     setError(null); // Clear any previous errors
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/nove-zasahy');
+      const response = await fetch(`http://127.0.0.1:5000/api/zasahy?limit=5&offset=${offset}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch data: ${response.status}`);
       }
       const data = await response.json();
 
-      if (data?.nove_zasahy && Array.isArray(data.nove_zasahy) && data.nove_zasahy.length > 0) {
-        const mappedCalls = data.nove_zasahy.map((item: any) => {
-          const parsedDate = new Date(item.datum.split('.').reverse().join('-').replace(' ', 'T') + ':00');
+      if (data?.zasahy && Array.isArray(data.zasahy) && data.zasahy.length > 0) {
+        const mappedCalls = data.zasahy.map((item: any) => {
+          const parsedDate = new Date(item.datum_ohlaseni.split('.').reverse().join('-').replace(' ', 'T') + ':00'); // Append ':00' for seconds
           return {
-            id: Date.now().toString() + Math.random().toString(), // Generate a unique ID
+            id: item.id,
             date: parsedDate.toISOString(),
             status: "Probíhá",
             type: item.typ_udalosti,
@@ -51,39 +54,44 @@ export default function HomeScreen() {
             location: item.obec,
             address: item.ulice,
             note: item.poznamka,
-          };
+          };          
         });
 
-        setEmergencyCalls(mappedCalls);
-        if (appState === 'active') {
-          mappedCalls.forEach(call => {
-            Notifications.scheduleNotificationAsync({
-              content: {
-                title: "Nový výjezd",
-                body: `${call.type} - ${call.location}`,
-                data: { id: call.id },
-              },
-              trigger: null,
-            });
-          });
+        if (initialLoad) {
+          setEmergencyCalls(mappedCalls);
+        } else {
+          appendEmergencyCalls(mappedCalls);
         }
       } else {
-        if (!(data?.nove_zasahy && Array.isArray(data.nove_zasahy) && data.nove_zasahy.length === 0)) {
-          throw new Error('Invalid data format received from the API');
+        if (initialLoad) {
+          setEmergencyCalls([]); // Ensure empty state is handled
         }
       }
     } catch (err: any) {
       console.error("Error fetching emergency calls:", err);
       setError(err.message || "An error occurred while fetching data.");
     } finally {
-      setRefreshing(false);
+      if (initialLoad) setRefreshing(false);
+      else setLoadingMore(false);
     }
   };
 
   useEffect(() => {
-    const intervalId = setInterval(fetchEmergencyCalls, 60000); // Fetch every 60 seconds
+    fetchEmergencyCalls(); // Initial fetch
+    const intervalId = setInterval(() => fetchEmergencyCalls(true), 60000); // Fetch every 60 seconds
     return () => clearInterval(intervalId); // Cleanup on unmount
-  }, [getFilteredEmergencyCalls]);
+  }, []);
+
+  const loadMoreEmergencyCalls = () => {
+    if (!loadingMore) {
+      setOffset(prevOffset => {
+        const newOffset = prevOffset + 5;
+        fetchEmergencyCalls(false);
+        return newOffset;
+      });
+    }
+  };
+
 
   const onRefresh = useCallback(() => {
     fetchEmergencyCalls();
@@ -93,7 +101,7 @@ export default function HomeScreen() {
     useCallback(() => {
       const subscription = AppState.addEventListener('change', nextAppState => {
         if (appState === 'active' && nextAppState === 'background') {
-          console.log("App went to background");
+          //console.log("App went to background");
         }
 
         if (appState === 'background' && nextAppState === 'active') {
@@ -110,13 +118,14 @@ export default function HomeScreen() {
   );
 
   const emergencyCalls = getFilteredEmergencyCalls();
-
   const renderEmptyState = () => (
     <View style={styles.emptyStateContainer}>
       {error ? (
         <Text style={styles.emptyStateText}>{error}</Text>
+      ) : emergencyCalls.length === 0 && refreshing ? (
+        <Text style={styles.emptyStateText}>Loading...</Text>
       ) : (
-        <Text style={styles.emptyStateText}>No emergencies found.</Text>
+        <Text style={styles.emptyStateText}>No incidents found</Text>
       )}
     </View>
   );
@@ -126,7 +135,6 @@ export default function HomeScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
 
       <FlatList
@@ -142,9 +150,15 @@ export default function HomeScreen() {
             colors={[colors.primary]}
             tintColor={colors.primary}
           />
-        }
+        }        
+        onEndReached={loadMoreEmergencyCalls}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={loadingMore && <Text style={styles.loadingMore}>Loading more...</Text>}        
       />
-    </SafeAreaView>
+
+
+
+
   );
 }
 
@@ -166,4 +180,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'gray',
     textAlign: 'center',
-  },
+  },  
+  loadingMore: {
+    fontSize: 16,
+    color: 'gray',
+    textAlign: 'center',
+  },  
