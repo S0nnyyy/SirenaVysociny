@@ -42,10 +42,12 @@ export default function HomeScreen() {
 
       if (data?.zasahy && Array.isArray(data.zasahy) && data.zasahy.length > 0) {
         const mappedCalls = data.zasahy.map((item: any) => {
-          const parsedDate = new Date(
-            item.datum_ohlaseni.split('.').reverse().join('-').replace(' ', 'T') + ':00'
+          const [day, month, yearAndTime] = item.datum_ohlaseni.split('.');
+          const [year, time] = yearAndTime.split(' ');
+          const parsedDate = new Date(`${year}-${month}-${day}T${time}:00`
           );
-          return {
+          const id = item.id || Math.random();
+          return  {
             id: item.id,
             date: parsedDate.toISOString(),
             status: 'Probíhá',
