@@ -33,30 +33,35 @@ export default function HomeScreen() {
     else setLoadingMore(true);
     setError(null); // Vymazanie predchádzajúcich chýb
     try {
-      const response = await fetch(`http://10.0.0.27:5000/api/zasahy?limit=5&offset=${offset}`);
+      const response = await fetch(`http://10.0.0.27:5000/api/zasahy?limit=5&offset=${offset}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          // Případná autentizace, pokud ji přidáte do API
+          // 'Authorization': 'Bearer YOUR_API_TOKEN',
+        },
+      });
       if (!response.ok) {
         throw new Error(`Nepodařilo se načíst data: ${response.status}`);
       }
       const data = await response.json();
-      console.log(data);
+      console.log('Načtená data z API:', data);
 
       if (data?.zasahy && Array.isArray(data.zasahy) && data.zasahy.length > 0) {
         const mappedCalls = data.zasahy.map((item: any) => {
           const [day, month, yearAndTime] = item.datum_ohlaseni.split('.');
           const [year, time] = yearAndTime.split(' ');
-          const parsedDate = new Date(`${year}-${month}-${day}T${time}:00`
-          );
-          const id = item.id || Math.random();
-          return  {
+          const parsedDate = new Date(`${year}-${month}-${day}T${time}:00`);
+          return {
             id: item.id,
             date: parsedDate.toISOString(),
-            status: 'Probíhá',
+            status: item.stav || 'Probíhá',
             type: item.typ_udalosti,
             subtype: item.podtyp_udalosti,
             region: item.okres,
             location: item.obec,
             address: item.ulice,
-            note: item.poznamka,
+            note: item.poznamka_pro_media,
           };
         });
 
@@ -72,16 +77,16 @@ export default function HomeScreen() {
       }
     } catch (err: any) {
       console.error('Chyba při načítání tísňových volání:', err);
-      setError(err.message || 'Nastala chyba při načítání dat.');
+      setError(err.message || 'Nepodařilo se načíst data. Zkontrolujte připojení k serveru.');
     } finally {
       if (initialLoad) setRefreshing(false);
-      else setLoadingMore(false)
+      else setLoadingMore(false);
     }
   };
 
   useEffect(() => {
-    fetchEmergencyCalls(); // Počiatočné načítanie
-    const intervalId = setInterval(() => fetchEmergencyCalls(true), 2000); // Načítanie každé 2 sekundy
+    fetchEmergencyCalls(); // Počiatočné načítanie při spuštění aplikace
+    const intervalId = setInterval(() => fetchEmergencyCalls(true), 30000); // Načítanie každých 30 sekúnd
     return () => clearInterval(intervalId); // Vyčistenie pri odmontovaní
   }, []);
 
@@ -96,6 +101,7 @@ export default function HomeScreen() {
   };
 
   const onRefresh = useCallback(() => {
+    setOffset(0); // Reset offsetu při ručním obnovení
     fetchEmergencyCalls();
   }, []);
 
@@ -141,7 +147,7 @@ export default function HomeScreen() {
       <FlatList
         data={emergencyCalls}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={renderEmptyState}
         refreshControl={
